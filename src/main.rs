@@ -14,7 +14,7 @@ use std::{
 };
 use tokio::sync::RwLock;
 use tower_http::services::ServeDir;
-
+use std::env;
 mod helper;
 
 
@@ -39,8 +39,16 @@ async fn main() -> anyhow::Result<()> {
         .with_state(article_store);
 
     // 启动服务器
-    let listener = tokio::net::TcpListener::bind("127.0.0.1:3000").await?;
-    println!("Server running on http://localhost:3000");
+    let env = env::var("RUST_ENV").unwrap_or_else(|_| "development".to_string());
+
+    // 根据环境变量设置端口
+    let port = match env.as_str() {
+        "production" => 80,
+        _ => 3000,
+    };
+
+    let listener = tokio::net::TcpListener::bind(format!("127.0.0.1:{}", port)).await?;
+    println!("Server running on http://localhost:{}", port);
     axum::serve(listener, app).await?;
 
     Ok(())
@@ -88,7 +96,6 @@ async fn process_article(path: &PathBuf) -> anyhow::Result<Article> {
 
 // Markdown转换HTML
 async fn markdown_to_html(content: &str) -> String {
-    // 使用 pulldown_cmark 解析 Markdown 并转换为 HTML
     let parser = Parser::new_ext(content,
         Options::ENABLE_MATH |
         Options::ENABLE_GFM |
@@ -102,10 +109,8 @@ async fn markdown_to_html(content: &str) -> String {
     let mut html_output = String::new();
     pulldown_cmark::html::push_html(&mut html_output, parser);
 
-    // 异步读取 head.html 文件
     let head = helper::read_file("src/head.html").await;
 
-    // 拼接完整的 HTML
     let html = format!(
         r#"<!DOCTYPE html>
 <html>
@@ -117,12 +122,10 @@ async fn markdown_to_html(content: &str) -> String {
 </body>
 </html>"#,
         head, html_output);
-    println!("{}", html);
     html
 }
 
-
-// 文章请求处理函数
+// 文章请求处理
 async fn article_handler(
     Path(id): Path<String>,
     state: axum::extract::State<ArticleStore>,
@@ -130,10 +133,12 @@ async fn article_handler(
     let mut store = state.write().await;
     
     if let Some(article) = store.get_mut(&id) {
+
         // 检查文件是否被修改
         if let Ok(metadata) = tokio::fs::metadata(&article.file_path).await {
             if let Ok(current_modified) = metadata.modified() {
                 if current_modified > article.last_modified {
+
                     // 重新加载文章
                     if let Ok(content) = tokio::fs::read_to_string(&article.file_path).await {
                         article.content = markdown_to_html(&content).await;
