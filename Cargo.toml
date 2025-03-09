@@ -1,0 +1,13 @@
+[package]
+name = "blog"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+anyhow = "1.0.97"
+axum = { version = "0.8.1", features = ["macros"] }
+chrono = "0.4.40"
+pulldown-cmark = "0.13.0"
+serde = { version = "1.0.218", features = ["derive"] }
+tokio = { version = "1.44.0", features = ["full"] }
+tower-http = { version = "0.6.2", features = ["fs"] }
