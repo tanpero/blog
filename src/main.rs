@@ -68,6 +68,7 @@ async fn index_handler(
     articles.sort_by(|a, b| b.created_at.cmp(&a.created_at));
     // 生成 HTML
     let mut html = String::from("<h1>博客文章</h1>");
+
     for article in articles {
         html.push_str(&format!(
             r#"<div class="card">
@@ -79,8 +80,23 @@ async fn index_handler(
             format_system_time(article.created_at)
         ));
     }
-    println!("{}", html);
-    Ok(Html(html))
+
+    
+    
+    let head = helper::read_file("src/head.html").await;
+    let all_html = format!(
+        r#"<!DOCTYPE html>
+<html>
+{}
+<body>
+<main class="container">
+{}
+</main>
+</body>
+</html>"#,
+         head, html);
+
+    Ok(Html(all_html))
 }
 
 // 新增：格式化 SystemTime 为可读字符串
@@ -91,7 +107,6 @@ fn format_system_time(time: SystemTime) -> String {
 
 async fn fallback_handler() -> Html<&'static str> {
 
-    let info = String::new("# 404 - Not Found"); 
 
     Html(r#"
         <h1>404 - 页面未找到</h1>
@@ -133,7 +148,7 @@ async fn process_article(path: &PathBuf) -> anyhow::Result<Article> {
     let created_at = metadata.created()?; // 新增：获取创建时间
     let title = extract_title(&content); // 新增：提取标题
 
-    let html = markdown_to_html(&content);
+    let html = generate_page(&content);
     
     Ok(Article {
         title: title.await,
@@ -150,7 +165,7 @@ async fn extract_title(content: &str) -> String {
     markdown_to_html(title).await
 }
 
-async fn generate_page(source: String) -> String {
+async fn generate_page(source: &String) -> String {
     let head = helper::read_file("src/head.html").await;
     let main = markdown_to_html(&source).await;
     let html = format!(
@@ -164,7 +179,6 @@ async fn generate_page(source: String) -> String {
 </body>
 </html>"#,
          head, main);
-
     html
 }
 
