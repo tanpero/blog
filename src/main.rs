@@ -79,6 +79,7 @@ async fn index_handler(
             format_system_time(article.created_at)
         ));
     }
+    println!("{}", html);
     Ok(Html(html))
 }
 
@@ -89,6 +90,9 @@ fn format_system_time(time: SystemTime) -> String {
 }
 
 async fn fallback_handler() -> Html<&'static str> {
+
+    let info = String::new("# 404 - Not Found"); 
+
     Html(r#"
         <h1>404 - 页面未找到</h1>
         <p>抱歉，您访问的页面不存在。</p>
@@ -146,6 +150,24 @@ async fn extract_title(content: &str) -> String {
     markdown_to_html(title).await
 }
 
+async fn generate_page(source: String) -> String {
+    let head = helper::read_file("src/head.html").await;
+    let main = markdown_to_html(&source).await;
+    let html = format!(
+        r#"<!DOCTYPE html>
+<html>
+{}
+<body>
+<main class="container">
+{}
+</main>
+</body>
+</html>"#,
+         head, main);
+
+    html
+}
+
 // Markdown转换HTML
 async fn markdown_to_html(content: &str) -> String {
     let parser = Parser::new_ext(content,
@@ -161,20 +183,7 @@ async fn markdown_to_html(content: &str) -> String {
     let mut html_output = String::new();
     pulldown_cmark::html::push_html(&mut html_output, parser);
 
-    let head = helper::read_file("src/head.html").await;
-
-    let html = format!(
-        r#"<!DOCTYPE html>
-<html>
-{}
-<body>
-<main class="container">
-{}
-</main>
-</body>
-</html>"#,
-        head, html_output);
-    html
+    html_output
 }
 
 // 文章请求处理
@@ -193,7 +202,7 @@ async fn article_handler(
                     // 重新加载文章
                     if let Ok(content) = tokio::fs::read_to_string(&article.file_path).await {
                         article.title = extract_title(&content).await; // 更新标题
-                        article.content = markdown_to_html(&content).await;
+                        article.content = generate_page(&content).await;
                         article.last_modified = current_modified;
                     }
                 }
@@ -205,3 +214,4 @@ async fn article_handler(
 
     Err(StatusCode::NOT_FOUND)
 }
+
