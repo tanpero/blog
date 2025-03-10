@@ -5,6 +5,7 @@ use axum::{
     routing::get,
     Router,
 };
+use chrono::{DateTime, Local};
 use pulldown_cmark::{Options, Parser};
 use std::{
     collections::HashMap,
@@ -22,9 +23,11 @@ type ArticleStore = Arc<RwLock<HashMap<String, Article>>>;
 
 #[derive(Debug, Clone)]
 struct Article {
+    title: String,
     content: String,
     file_path: PathBuf,
     last_modified: SystemTime,
+    created_at: SystemTime,
 }
 
 #[tokio::main]
@@ -34,8 +37,10 @@ async fn main() -> anyhow::Result<()> {
 
     // 创建路由
     let app = Router::new()
+        .route("/", get(index_handler))
         .route("/articles/{id}", get(article_handler))        
         .nest_service("/public", ServeDir::new("src/public"))
+        .fallback(fallback_handler)
         .with_state(article_store);
 
     // 启动服务器
@@ -47,11 +52,48 @@ async fn main() -> anyhow::Result<()> {
         _ => 3000,
     };
 
-    let listener = tokio::net::TcpListener::bind(format!("127.0.0.1:{}", port)).await?;
+    let listener = tokio::net::TcpListener::bind(format!("0.0.0.0:{}", port)).await?;
     println!("Server running on http://localhost:{}", port);
     axum::serve(listener, app).await?;
 
     Ok(())
+}
+
+async fn index_handler(
+    state: axum::extract::State<ArticleStore>,
+) -> Result<Html<String>, StatusCode> {
+    let store = state.read().await;
+    // 按创建时间排序
+    let mut articles: Vec<&Article> = store.values().collect();
+    articles.sort_by(|a, b| b.created_at.cmp(&a.created_at));
+    // 生成 HTML
+    let mut html = String::from("<h1>博客文章</h1>");
+    for article in articles {
+        html.push_str(&format!(
+            r#"<div class="card">
+                <h2><a href="/articles/{}">{}</a></h2>
+                <p>创建时间: {}</p>
+            </div>"#,
+            article.file_path.file_stem().and_then(|s| s.to_str()).unwrap_or(""),
+            article.title,
+            format_system_time(article.created_at)
+        ));
+    }
+    Ok(Html(html))
+}
+
+// 新增：格式化 SystemTime 为可读字符串
+fn format_system_time(time: SystemTime) -> String {
+    let datetime: DateTime<Local> = time.into();
+    datetime.format("%Y-%m-%d %H:%M:%S").to_string()
+}
+
+async fn fallback_handler() -> Html<&'static str> {
+    Html(r#"
+        <h1>404 - 页面未找到</h1>
+        <p>抱歉，您访问的页面不存在。</p>
+        <p><a href="/">返回首页</a></p>
+    "#)
 }
 
 // 初始化文章存储
@@ -84,14 +126,24 @@ async fn process_article(path: &PathBuf) -> anyhow::Result<Article> {
     let content = std::fs::read_to_string(path)?;
     let metadata = std::fs::metadata(path)?;
     let last_modified = metadata.modified()?;
+    let created_at = metadata.created()?; // 新增：获取创建时间
+    let title = extract_title(&content); // 新增：提取标题
 
     let html = markdown_to_html(&content);
     
     Ok(Article {
+        title: title.await,
         content: html.await,
         file_path: path.clone(),
         last_modified,
+        created_at,
     })
+}
+
+async fn extract_title(content: &str) -> String {
+    let first_line = content.lines().next().unwrap_or("");
+    let title = first_line.trim_start_matches('#').trim();
+    markdown_to_html(title).await
 }
 
 // Markdown转换HTML
@@ -138,14 +190,14 @@ async fn article_handler(
         if let Ok(metadata) = tokio::fs::metadata(&article.file_path).await {
             if let Ok(current_modified) = metadata.modified() {
                 if current_modified > article.last_modified {
-
                     // 重新加载文章
                     if let Ok(content) = tokio::fs::read_to_string(&article.file_path).await {
+                        article.title = extract_title(&content).await; // 更新标题
                         article.content = markdown_to_html(&content).await;
                         article.last_modified = current_modified;
                     }
                 }
-            }
+            }        
         }
         
         return Ok(Html(article.content.clone()));
