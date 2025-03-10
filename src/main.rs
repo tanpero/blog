@@ -76,14 +76,17 @@ async fn index_handler(
     let mut html = String::from("<h1>博客文章</h1>");
 
     for article in articles {
+
+        let (englishTime, chineseTime) = helper::format_system_time(article.created_at);
+    
         html.push_str(&format!(
             r#"<div class="card">
                 <h2><a href="/articles/{}">{}</a></h2>
-                <p>创建时间: {}</p>
+                <div class="time-container"><span>{}</span> <span>{}</span></div>
             </div>"#,
             article.file_path.file_stem().and_then(|s| s.to_str()).unwrap_or(""),
             article.title,
-            format_system_time(article.created_at)
+            englishTime, chineseTime
         ));
     }
 
@@ -105,11 +108,6 @@ async fn index_handler(
     Ok(Html(all_html))
 }
 
-// 新增：格式化 SystemTime 为可读字符串
-fn format_system_time(time: SystemTime) -> String {
-    let datetime: DateTime<Local> = time.into();
-    datetime.format("%Y-%m-%d %H:%M:%S").to_string()
-}
 
 async fn fallback_handler() -> Html<&'static str> {
 

@@ -60,7 +60,7 @@ header {
 
 .topic p {
     margin-bottom: 1rem;
-    color: var(--text-color);
+    color: cvar(--text-color);
 }
 
 .divider {
@@ -87,17 +87,69 @@ footer {
     width: 100%;
     text-align: center;
     background-color: var(--background-color);
-    padding: 1rem 0;
+    padding: 0.5rem 0;
     border-top: 1px solid var(--border-color);
 }
 
+
+/* 移动端适配 */
 @media (max-width: 768px) {
     .showcase-container {
-        flex-direction: column;
+        flex-direction: column; /* 切换为垂直布局 */
+        gap: 1rem; /* 缩小分区之间的间距 */
     }
 
     .section-projects h3,
     .section-notes h3 {
-        text-align: left;
+        text-align: left; /* 统一左对齐 */
+    }
+
+    .section-projects,
+    .section-notes {
+        width: 100%; /* 确保分区占满宽度 */
+    }
+
+    .section-articles h2,
+    .section-projects h2,
+    .section-notes h2 {
+        font-size: 1.6rem; /* 缩小标题字体大小 */
+    }
+
+    .topic h3 {
+        font-size: 1.4rem; /* 缩小主题标题字体大小 */
+    }
+
+    .topic p {
+        font-size: 0.95rem; /* 缩小描述字体大小 */
+    }
+
+    .divider {
+        margin: 0.8rem 0; /* 缩小分割线间距 */
+    }
+
+    footer {
+        padding: 0.8rem 0; /* 缩小版权声明的间距 */
+        font-size: 0.9rem; /* 缩小版权声明的字体大小 */
     }
 }
+
+@media (max-width: 480px) {
+    .section-articles h2,
+    .section-projects h2,
+    .section-notes h2 {
+        font-size: 1.4rem; /* 进一步缩小标题字体大小 */
+    }
+
+    .topic h3 {
+        font-size: 1.2rem; /* 进一步缩小主题标题字体大小 */
+    }
+
+    .topic p {
+        font-size: 0.9rem; /* 进一步缩小描述字体大小 */
+    }
+
+    footer {
+        font-size: 0.85rem; /* 进一步缩小版权声明的字体大小 */
+    }
+}
+

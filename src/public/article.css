@@ -247,3 +247,9 @@ button:hover {
     color: #2980b9;
     border-bottom-color: currentColor;
 }
+
+.time-container {
+    display: flex;
+    justify-content: space-between; /* 使两个span分别靠左和靠右 */
+    align-items: center; /* 垂直居中对齐 */
+}
