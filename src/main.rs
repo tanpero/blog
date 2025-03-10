@@ -6,6 +6,7 @@ use axum::{
     Router,
 };
 use chrono::{DateTime, Local};
+use helper::read_file;
 use pulldown_cmark::{Options, Parser};
 use std::{
     collections::HashMap,
@@ -14,6 +15,8 @@ use std::{
     time::SystemTime,
 };
 use tokio::sync::RwLock;
+use tokio::fs::File;
+use tokio::io::AsyncReadExt;
 use tower_http::services::ServeDir;
 use std::env;
 mod helper;
@@ -32,21 +35,19 @@ struct Article {
 
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
-    // 初始化文章存储
+    
     let article_store = init_article_store().await?;
 
-    // 创建路由
     let app = Router::new()
-        .route("/", get(index_handler))
+        .route("/", get(root_handler))
+        .route("/articles", get(index_handler))
         .route("/articles/{id}", get(article_handler))        
         .nest_service("/public", ServeDir::new("src/public"))
         .fallback(fallback_handler)
         .with_state(article_store);
 
-    // 启动服务器
     let env = env::var("RUST_ENV").unwrap_or_else(|_| "development".to_string());
 
-    // 根据环境变量设置端口
     let port = match env.as_str() {
         "production" => 80,
         _ => 3000,
@@ -57,6 +58,11 @@ async fn main() -> anyhow::Result<()> {
     axum::serve(listener, app).await?;
 
     Ok(())
+}
+
+async fn root_handler() -> Result<Html<String>, StatusCode> {
+    let html = helper::read_file("src/public/index.html").await;
+    Ok(Html(html))
 }
 
 async fn index_handler(
