@@ -253,3 +253,53 @@ button:hover {
     justify-content: space-between; /* 使两个span分别靠左和靠右 */
     align-items: center; /* 垂直居中对齐 */
 }
+
+@media (max-width: 768px) {
+    body {
+        padding: 0.5rem;
+        font-size: 16px;
+        max-width: 100%; /* 确保内容不超出屏幕宽度 */
+        overflow-x: hidden; /* 防止水平滚动 */
+    }
+
+    .container {
+        padding: 0 10px;
+        width: 100%; /* 确保容器宽度占满屏幕 */
+    }
+
+    h1 { font-size: 1.8rem; }
+    h2 { font-size: 1.6rem; }
+    h3 { font-size: 1.4rem; }
+
+    table {
+        display: block;
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+    }
+
+    pre {
+        width: 100%; /* 确保代码块宽度占满屏幕 */
+        font-size: 14px; /* 调整代码块字体大小 */
+        overflow-x: auto; /* 允许水平滚动 */
+    }
+
+    code {
+        font-size: 14px; /* 调整行内代码字体大小 */
+    }
+}
+
+@media (max-width: 480px) {
+    ul, ol {
+        padding-left: 1.5rem;
+    }
+
+    pre {
+        padding: 0.8rem;
+        font-size: 14px;
+    }
+
+    th, td {
+        padding: 0.5rem;
+    }
+}
+
