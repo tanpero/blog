@@ -41,6 +41,7 @@ async fn main() -> anyhow::Result<()> {
     let app = Router::new()
         .route("/", get(root_handler))
         .route("/articles", get(index_handler))
+        .route("/articles/", get(index_handler))
         .route("/articles/{id}", get(article_handler))        
         .nest_service("/public", ServeDir::new("src/public"))
         .fallback(fallback_handler)
@@ -73,7 +74,7 @@ async fn index_handler(
     let mut articles: Vec<&Article> = store.values().collect();
     articles.sort_by(|a, b| b.created_at.cmp(&a.created_at));
     // 生成 HTML
-    let mut html = String::from("<h1>博客文章</h1>");
+    let mut html = String::from("<h1>Articles</h1>");
 
     for article in articles {
 
@@ -90,8 +91,6 @@ async fn index_handler(
         ));
     }
 
-    
-    
     let head = helper::read_file("src/head.html").await;
     let all_html = format!(
         r#"<!DOCTYPE html>
@@ -109,14 +108,28 @@ async fn index_handler(
 }
 
 
-async fn fallback_handler() -> Html<&'static str> {
+async fn fallback_handler() -> Result<Html<String>, StatusCode> {
 
-
-    Html(r#"
-        <h1>404 - 页面未找到</h1>
-        <p>抱歉，您访问的页面不存在。</p>
+    let main = r#"
+        <h1>404 - Lost in the Cosmos</h1>
+        <p>这里是空白。</p>
         <p><a href="/">返回首页</a></p>
-    "#)
+    "#;  
+    
+    let head = helper::read_file("src/head.html").await;
+    let all_html = format!(
+        r#"<!DOCTYPE html>
+<html>
+{}
+<body>
+<main class="container">
+{}
+</main>
+</body>
+</html>"#,
+         head, main);
+
+    Ok(Html(all_html))
 }
 
 // 初始化文章存储

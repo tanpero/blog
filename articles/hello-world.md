@@ -78,7 +78,7 @@ Typora only supports fences in GitHub Flavored Markdown. Original code blocks in
 
 Using fences is easy: Input \`\`\` and press `return`. Add an optional language identifier after \`\`\` and we'll run it through syntax highlighting:
 
-````gfm
+````markdown
 Here's an example:
 
 ```js

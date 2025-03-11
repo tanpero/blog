@@ -7,42 +7,68 @@
     window.hasMermaid = false;
     window.hasABC = false;
 
-    document.addEventListener("DOMContentLoaded", () => {
+    document.addEventListener("DOMContentLoaded", async () => {
         const codeBlocks = document.querySelectorAll("code");
+
+        async function loadHighlightJS() {
+            try {
+                const hljs = await import('https://cdn.bootcdn.net/ajax/libs/highlight.js/11.11.1/es/highlight.min.js');
+                window.hljs = hljs.default;
+                console.log('Highlight.js loaded successfully!');
+            } catch (error) {
+                alert("您的浏览器无法正确显示代码高亮！")
+            }
+        }
+
+        // 调用函数加载 Highlight.js
+        await loadHighlightJS();
         
+        if (window.screen.width <= 480) {
+            const pres = document.querySelectorAll("pre");
+            [...pres].forEach(e => e.style.fontSize = '32px');
+        }
+
         const languages = Array.from(codeBlocks).map(code => code.className);
         const uniqueLanguages = [...new Set(languages)].filter(lang => lang);
 
         if (uniqueLanguages.includes("language-mermaid")) hasMermaid = true;
         if (uniqueLanguages.includes("language-abc")) hasABC = true;
 
-        const style = document.createElement("link");
-        style.rel = "stylesheet";
-        style.href = "https://cdn.bootcdn.net/ajax/libs/highlight.js/11.11.1/styles/default.min.css";
+        const style1 = document.createElement("link");
+        style1.rel = "stylesheet";
+        style1.href = "https://cdn.bootcdn.net/ajax/libs/highlight.js/11.11.1/styles/default.min.css";
 
-        document.head.appendChild(style);
+        const style2 = document.createElement("link");
+        style2.rel = "stylesheet";
+        style2.href = "https://cdn.bootcdn.net/ajax/libs/highlight.js/11.11.1/styles/base16/monokai.min.css";
 
-        const highlightJsUrl = "https://cdn.bootcdn.net/ajax/libs/highlight.js/11.11.1/es/highlight.min.js";
-        const script = document.createElement("script");
-        script.src = highlightJsUrl;
-        script.onload = () => {
+        document.head.appendChild(style1);
+        document.head.appendChild(style2);
             
-            uniqueLanguages.forEach(lang => {
+        uniqueLanguages.forEach(async lang => {
 
-                const langScript = document.createElement("script");
-                langScript.src = `https://cdn.bootcdn.net/ajax/libs/highlight.js/11.11.1/es/${lang.replace("language-", "")}.min.js`;
-                langScript.onload = () => {                    
-                    if (hljs.getLanguage(lang)) {
-                        hljs.registerLanguage(lang, hljs.getLanguage(lang));
-                    }
-                };
-                document.head.appendChild(langScript);
-                
-            });
+            const langScript = await import(`https://cdn.bootcdn.net/ajax/libs/highlight.js/11.11.1/es/languages/${lang.replace("language-", "")}.min.js`);
+            
+            if (window.hljs.getLanguage(lang)) {
+                window.hljs.registerLanguage(lang, window.hljs.getLanguage(lang));
+            }
+            
+        });
 
-            hljs.highlightAll();
-        };
-        document.head.appendChild(script);
+        window.hljs.highlightAll();
+
+        if (window.hasMermaid) {
+            loadMermaid();
+        }
+
+        if (window.hasABC) {
+            loadABC();
+        }
+
+        if (window.screen.width <= 400) {
+            [...document.querySelectorAll("table")].forEach(e => e.style.fontSize = "32px");
+        }
+
     });
 </script>
 
@@ -88,8 +114,20 @@
                         element.textContent = `$${element.textContent}$`;
                     }
                     MathJax.Hub.Queue(["Typeset", MathJax.Hub, element]);
+                    MathJax.Hub.Queue(() => {
+                        if (window.screen.width <= 400) {
+                            document.querySelectorAll('[id^="MathJax-Element"]').forEach((e) => {
+                                e.style.transform = "scale(2)";
+                                e.style.marginTop = "40px";
+                                e.style.marginBottom = "40px";
+                            });
+                        }
+                    });
                 });
+
+                
             };
+                
 
             document.head.appendChild(script);
         }
@@ -123,110 +161,111 @@
 
 </style>
 <script>
+    function loadMermaid() {
+        
+        const script = document.createElement("script");
+        script.src = "https://unpkg.com/mermaid@10.0.3-alpha.1/dist/mermaid.min.js";
+        script.onload = () => {     
 
-    document.addEventListener('DOMContentLoaded', () => {
-        function loadMermaid() {
+            mermaid.initialize({
+                theme: 'default',
+                securityLevel: 'loose',
+                flowchart: { 
+                    curve: 'basis',
+                    htmlLabels: true
+                }
+            });
+
+            const mermaidBlocks = document.querySelectorAll('pre code.language-mermaid');
             
-            const script = document.createElement("script");
-            script.src = "https://unpkg.com/mermaid@10.0.3-alpha.1/dist/mermaid.min.js";
-            script.onload = () => {     
+            mermaidBlocks.forEach(async (codeBlock, index) => {
+                try {
+                    const mermaidContainer = document.createElement('div');
+                    mermaidContainer.className = `mermaid-container chart-${index}`;
+                    mermaidContainer.style.textAlign = 'center';
+                    mermaidContainer.style.border = 'none';
+                    
+                    codeBlock.parentElement.parentElement.insertBefore(mermaidContainer, codeBlock.parentElement);
 
-                mermaid.initialize({
-                    theme: 'default',
-                    securityLevel: 'loose',
-                    flowchart: { 
-                        curve: 'basis',
-                        htmlLabels: true
+                    const code = codeBlock.textContent;
+                    
+                    const { svg } = await mermaid.render(`mermaid-svg-${index}`, code);
+                    
+                    mermaidContainer.innerHTML = svg;
+
+                    codeBlock.parentElement.className += ' original-code';
+
+                    const toggle = document.createElement('div');
+                    toggle.className = 'code-toggle';
+                    toggle.textContent = '▲ 显示代码';
+                    mermaidContainer.appendChild(toggle);
+
+                    let isVisible = false;
+                    toggle.addEventListener('click', () => {
+                        isVisible = !isVisible;
+                        codeBlock.parentElement.style.display = isVisible ? 'block' : 'none';
+                        toggle.textContent = isVisible ? '▼ 隐藏代码' : '▲ 显示代码';
+                    });
+
+                    // 在容器创建后添加：
+                    const title = document.createElement('p');
+                    title.textContent = `图表 ${index + 1}`;
+                    title.style.textAlign = 'center';
+                    mermaidContainer.prepend(title);
+
+                    const exportBtn = document.createElement('button');
+                    exportBtn.textContent = '导出为 SVG';
+                    exportBtn.onclick = () => {
+                        const blob = new Blob([svg], {type: 'image/svg+xml'});
+                        const url = URL.createObjectURL(blob);
+                        const a = document.createElement('a');
+                        a.href = url;
+                        a.download = `chart-${index}.svg`;
+                        a.click();
+                    };
+                    exportBtn.style = `                
+                        background: none;
+                        color: var(--secondary-color);
+                        padding: 8px 16px;
+                        border: none;
+                        font-family: inherit;
+                        font-size: 14px;
+                        cursor: pointer;
+                        transition: color 0.2s, border-bottom-color 0.2s;
+                        border-bottom: 1px solid transparent;
+                    `;
+
+                    if (window.screen.width <= 400) {
+                        exportBtn.style.transform = `scale(1.8)`;
+                        exportBtn.style.transformOrigin = `center center`;                        
+                        toggle.style.transform = `scale(1.8)`;
+                        toggle.style.transformOrigin = `center center`;
                     }
-                });
 
-                const mermaidBlocks = document.querySelectorAll('pre code.language-mermaid');
-                
-                mermaidBlocks.forEach(async (codeBlock, index) => {
-                    try {
-                        const mermaidContainer = document.createElement('div');
-                        mermaidContainer.className = `mermaid-container chart-${index}`;
-                        mermaidContainer.style.textAlign = 'center';
-                        mermaidContainer.style.border = 'none';
-                        
-                        codeBlock.parentElement.parentElement.insertBefore(mermaidContainer, codeBlock.parentElement);
+                    const buttonContainer = document.createElement('div');
+                    buttonContainer.className = "button-container";
+                    
+                    buttonContainer.appendChild(toggle);
+                    buttonContainer.appendChild(exportBtn);
+                    
+                    mermaidContainer.appendChild(buttonContainer);
 
-                        const code = codeBlock.textContent;
-                        
-                        const { svg } = await mermaid.render(`mermaid-svg-${index}`, code);
-                        
-                        mermaidContainer.innerHTML = svg;
+                } catch (err) {
+                    const errorDiv = document.createElement('div');
+                    errorDiv.className = 'error-message';
+                    errorDiv.innerHTML = `
+                        <strong>渲染错误 (图表 ${index + 1}):</strong><br>
+                        ${err.message}
+                    `;
+                    mermaidContainer.appendChild(errorDiv);
+                    console.error(`图表 ${index + 1} 渲染失败:`, err);
+                }
+            });
+        };
 
-                        codeBlock.parentElement.className += ' original-code';
-
-                        const toggle = document.createElement('div');
-                        toggle.className = 'code-toggle';
-                        toggle.textContent = '▲ 显示代码';
-                        mermaidContainer.appendChild(toggle);
-
-                        let isVisible = false;
-                        toggle.addEventListener('click', () => {
-                            isVisible = !isVisible;
-                            codeBlock.parentElement.style.display = isVisible ? 'block' : 'none';
-                            toggle.textContent = isVisible ? '▼ 隐藏代码' : '▲ 显示代码';
-                        });
-
-                        // 在容器创建后添加：
-                        const title = document.createElement('p');
-                        title.textContent = `图表 ${index + 1}`;
-                        title.style.textAlign = 'center';
-                        mermaidContainer.prepend(title);
-
-                        const exportBtn = document.createElement('button');
-                        exportBtn.textContent = '导出为 SVG';
-                        exportBtn.onclick = () => {
-                            const blob = new Blob([svg], {type: 'image/svg+xml'});
-                            const url = URL.createObjectURL(blob);
-                            const a = document.createElement('a');
-                            a.href = url;
-                            a.download = `chart-${index}.svg`;
-                            a.click();
-                        };
-                        exportBtn.style = `                
-                            background: none;
-                            color: var(--secondary-color);
-                            padding: 8px 16px;
-                            border: none;
-                            font-family: inherit;
-                            font-size: 14px;
-                            cursor: pointer;
-                            transition: color 0.2s, border-bottom-color 0.2s;
-                            border-bottom: 1px solid transparent;
-                        `;
-
-                        const buttonContainer = document.createElement('div');
-                        buttonContainer.className = "button-container";
-                        
-                        buttonContainer.appendChild(toggle);
-                        buttonContainer.appendChild(exportBtn);
-                        
-                        mermaidContainer.appendChild(buttonContainer);
-
-                    } catch (err) {
-                        const errorDiv = document.createElement('div');
-                        errorDiv.className = 'error-message';
-                        errorDiv.innerHTML = `
-                            <strong>渲染错误 (图表 ${index + 1}):</strong><br>
-                            ${err.message}
-                        `;
-                        mermaidContainer.appendChild(errorDiv);
-                        console.error(`图表 ${index + 1} 渲染失败:`, err);
-                    }
-                });
-            };
-
-            document.head.appendChild(script);
-        }
-
-        if (window.hasMermaid) {
-            loadMermaid();
-        }
-    });
+        document.head.appendChild(script);
+    }
+    
 </script>
 
 <style>
@@ -241,103 +280,98 @@
 
 <script>
 
-    document.addEventListener('DOMContentLoaded', () => {
+    
+function loadABC() {
+
+    const scriptElement = document.createElement('script');
+    scriptElement.src = 'https://cdn.bootcdn.net/ajax/libs/abcjs/6.4.4/abcjs-basic-min.js';
+
+    scriptElement.onload = () => {
         
-        function loadABC() {
+        let abc_player_count = 0;
+        document.querySelectorAll('pre > code.language-abc').forEach(codeElement => {
+            abc_player_count += 1;
 
-            const scriptElement = document.createElement('script');
-            scriptElement.src = 'https://cdn.bootcdn.net/ajax/libs/abcjs/6.4.4/abcjs-basic-min.js';
+            const preElement = codeElement.parentElement;
 
-            scriptElement.onload = () => {
-                
-                let abc_player_count = 0;
-                document.querySelectorAll('pre > code.language-abc').forEach(codeElement => {
-                    abc_player_count += 1;
+            const abcContainer = document.createElement('div');
+            abcContainer.className = 'abc-container';
 
-                    const preElement = codeElement.parentElement;
+            const notationDiv = document.createElement('div');
+            notationDiv.id = 'notation';
 
-                    const abcContainer = document.createElement('div');
-                    abcContainer.className = 'abc-container';
+            const playControlDiv = document.createElement('div');
+            playControlDiv.id = 'play-control-' + abc_player_count;
 
-                    const notationDiv = document.createElement('div');
-                    notationDiv.id = 'notation';
+            const errorDiv = document.createElement('div');
+            errorDiv.className = 'error';
 
-                    const playControlDiv = document.createElement('div');
-                    playControlDiv.id = 'play-control-' + abc_player_count;
+            abcContainer.appendChild(notationDiv);
+            abcContainer.appendChild(playControlDiv);
+            abcContainer.appendChild(errorDiv);
 
-                    const errorDiv = document.createElement('div');
-                    errorDiv.className = 'error';
+            preElement.parentNode.insertBefore(abcContainer, preElement.nextSibling);
 
-                    abcContainer.appendChild(notationDiv);
-                    abcContainer.appendChild(playControlDiv);
-                    abcContainer.appendChild(errorDiv);
-
-                    preElement.parentNode.insertBefore(abcContainer, preElement.nextSibling);
-
-                    preElement.style.display = 'none';
-                    abcContainer.appendChild(preElement);
-                
-                    let synthControl = null;
-                
-                    function createSynthController(visualObj) {
-                        if (synthControl) {
-                            synthControl.disable(true);
-                        }
-                
-                        synthControl = new ABCJS.synth.SynthController();
-                        synthControl.load("#play-control-" + abc_player_count, null, {
-                            displayLoop: true,
-                            displayPlay: true,
-                            displayProgress: true,
-                            displayWarp: true
-                        });
-                
-                        const audioParams = { 
-                            chordsOff: false,
-                            programming: {
-                                debugCallback: console.log
-                            }
-                        };
-                
-                        synthControl.setTune(visualObj, false, audioParams).catch(error => {
-                            console.error('音频加载失败:', error);
-                            errorDiv.textContent = `音频加载错误: ${error.message}`;
-                        });
+            preElement.style.display = 'none';
+            abcContainer.appendChild(preElement);
+        
+            let synthControl = null;
+        
+            function createSynthController(visualObj) {
+                if (synthControl) {
+                    synthControl.disable(true);
+                }
+        
+                synthControl = new ABCJS.synth.SynthController();
+                synthControl.load("#play-control-" + abc_player_count, null, {
+                    displayLoop: true,
+                    displayPlay: true,
+                    displayProgress: true,
+                    displayWarp: true
+                });
+        
+                const audioParams = { 
+                    chordsOff: false,
+                    programming: {
+                        debugCallback: console.log
                     }
-                
-                    // 实时渲染乐谱
-                    function renderABC(abcString) {
-                        try {
-                            errorDiv.textContent = '';
-                            
-                            const visualObj = ABCJS.renderAbc(notationDiv, abcString, {
-                                responsive: 'resize',
-                                add_classes: true
-                            })[0];
-                
-                            if (ABCJS.synth.supportsAudio()) {
-                                createSynthController(visualObj);
-                            }
-                        } catch (error) {
-                            errorDiv.textContent = `乐谱错误: ${error.message}`;
-                        }
-                    }
-                
-                    renderABC(codeElement.textContent);
+                };
+        
+                synthControl.setTune(visualObj, false, audioParams).catch(error => {
+                    console.error('音频加载失败:', error);
+                    errorDiv.textContent = `音频加载错误: ${error.message}`;
                 });
             }
+        
+            // 实时渲染乐谱
+            function renderABC(abcString) {
+                try {
+                    errorDiv.textContent = '';
+                    
+                    const visualObj = ABCJS.renderAbc(notationDiv, abcString, {
+                        responsive: 'resize',
+                        add_classes: true
+                    })[0];
+        
+                    if (ABCJS.synth.supportsAudio()) {
+                        createSynthController(visualObj);
+                    }
+                } catch (error) {
+                    errorDiv.textContent = `乐谱错误: ${error.message}`;
+                }
+            }
+        
+            renderABC(codeElement.textContent);
+        });
+    }
 
-            const linkElement = document.createElement('link');
-            linkElement.rel = 'stylesheet';
-            linkElement.href = '/public/abcjs-audio.css';
+    const linkElement = document.createElement('link');
+    linkElement.rel = 'stylesheet';
+    linkElement.href = '/public/abcjs-audio.css';
 
-            document.head.appendChild(scriptElement);
-            document.head.appendChild(linkElement);
-        }
+    document.head.appendChild(scriptElement);
+    document.head.appendChild(linkElement);
+}
 
-        if (window.hasABC) {
-            loadABC();
-        }
-    });
 </script>
 </head>

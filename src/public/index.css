@@ -63,6 +63,10 @@ header {
     color: cvar(--text-color);
 }
 
+.section-notes > p {    
+    text-align: right;
+}
+
 .divider {
     height: 1px;
     background-color: var(--border-color);

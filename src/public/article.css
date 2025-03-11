@@ -32,6 +32,7 @@ body {
     color: var(--text-color);
     background-color: var(--background-color);
     padding: 1rem;
+    font-size: 16px;
 }
 
 /* 内容容器 */
@@ -274,17 +275,20 @@ button:hover {
     table {
         display: block;
         overflow-x: auto;
-        -webkit-overflow-scrolling: touch;
     }
 
     pre {
         width: 100%; /* 确保代码块宽度占满屏幕 */
-        font-size: 14px; /* 调整代码块字体大小 */
+        font-size: 1rem; /* 调整代码块字体大小 */
         overflow-x: auto; /* 允许水平滚动 */
     }
 
     code {
-        font-size: 14px; /* 调整行内代码字体大小 */
+        font-size: 1rem; /* 调整行内代码字体大小 */
+    }
+
+    pre > code {
+        font-size: 1rem;
     }
 }
 
@@ -293,13 +297,26 @@ button:hover {
         padding-left: 1.5rem;
     }
 
+    
     pre {
-        padding: 0.8rem;
-        font-size: 14px;
+        width: 100%;
+        font-size: 100px;
+        overflow-x: auto;
+    }
+
+
+    pre > code {
+        font-size: 100px;
     }
 
     th, td {
         padding: 0.5rem;
     }
+}
+
+code {
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+    hyphens: auto;
 }
 
