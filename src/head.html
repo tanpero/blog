@@ -65,7 +65,7 @@
             loadABC();
         }
 
-        if (window.screen.width <= 400) {
+        if (window.screen.width <= 480) {
             [...document.querySelectorAll("table")].forEach(e => e.style.fontSize = "32px");
         }
 
@@ -115,7 +115,7 @@
                     }
                     MathJax.Hub.Queue(["Typeset", MathJax.Hub, element]);
                     MathJax.Hub.Queue(() => {
-                        if (window.screen.width <= 400) {
+                        if (window.screen.width <= 480) {
                             document.querySelectorAll('[id^="MathJax-Element"]').forEach((e) => {
                                 e.style.transform = "scale(2)";
                                 e.style.marginTop = "40px";
@@ -124,11 +124,8 @@
                         }
                     });
                 });
-
-                
             };
                 
-
             document.head.appendChild(script);
         }
 
@@ -235,7 +232,7 @@
                         border-bottom: 1px solid transparent;
                     `;
 
-                    if (window.screen.width <= 400) {
+                    if (window.screen.width <= 480) {
                         exportBtn.style.transform = `scale(1.8)`;
                         exportBtn.style.transformOrigin = `center center`;                        
                         toggle.style.transform = `scale(1.8)`;
