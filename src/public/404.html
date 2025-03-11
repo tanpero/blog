@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>404 - Lost in the Cosmos</title>
+    <style>
+        body {
+            font-family: 'Courier New', monospace;
+            background-color: #000;
+            color: #fff;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            margin: 0;
+            overflow: hidden;
+        }
+        
+        .typewriter h1 {
+            font-size: 3rem;
+            white-space: nowrap;
+            overflow: hidden;
+            border-right: 3px solid #fff;
+            animation: 
+                typing 3s steps(40, end),
+                blink-caret 0.75s step-end infinite;
+        }
+        
+        @keyframes typing {
+            from { width: 0 }
+            to { width: 100% }
+        }
+        
+        @keyframes blink-caret {
+            from, to { border-color: transparent }
+            50% { border-color: #fff }
+        }
+        
+        .expanding-text {
+            font-size: 2em;
+            font-weight: bold;
+            white-space: nowrap;
+            overflow: hidden;
+            opacity: 0;
+        }
+        
+        .char {
+            display: inline-block;
+            opacity: 1;
+            transition: opacity 2s;
+        }
+        
+        @keyframes flyRight {
+            from {
+                transform: translateX(0);
+            }
+            to {
+                transform: translateX(100vw);
+                opacity: 0;
+            }
+        }
+
+        .back {
+            opacity: 0;
+            color: white;
+            margin-top: 20px;
+        }
+        a:visited {
+            color: white;
+        }
+        
+    </style>
+</head>
+<body>
+    <div class="typewriter">
+        <h1>404 - Lost in the Cosmos</h1>
+        <p class="expanding-text" data-text="这里是空白。">这里是空白。</p>
+        <p class="back"><a href="/">返回首页</a></p>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const h1 = document.querySelector('.typewriter h1');
+            
+            // 当第一行动画完成后，显示第二行
+            h1.addEventListener('animationend', function() {
+                const textElement = document.querySelector('.expanding-text');
+                textElement.style.transition = 'opacity 1s';
+                textElement.style.opacity = '1';
+                const text = textElement.textContent;
+                let chars = '';
+                
+                // 将每个字符包装在<span>中以便单独动画
+                for (let i = 0; i < text.length; i++) {
+                    chars += `<span class="char">${text[i]}</span>`;
+                }
+                
+                textElement.innerHTML = chars;
+                
+                // 设置每个字符的动画
+                setTimeout(() => {
+                    const charElements = textElement.querySelectorAll('.char');
+                    charElements.forEach((char, index) => {
+                        // 计算每个字符的动画速度和延迟
+                        const speedFactor = 1 + (text.length - index) * 0.2; // 右边的字符更快
+                        const delay = index * 0.05; // 左边的字符稍有延迟开始
+                        
+                        // 设置动画
+                        char.style.animation = `flyRight ${speedFactor}s ease-out ${delay}s forwards`;                        
+                    });
+                }, 2000);
+
+                setTimeout(() => {
+                    const link = document.querySelector(".back");
+                    link.style.opacity = '1';
+                    link.style.color = 'aquamarine';
+                    link.style.transition = 'opacity 1s, color 1s';
+                }, 3000);
+            });
+        });
+    </script>
+</body>
+</html>

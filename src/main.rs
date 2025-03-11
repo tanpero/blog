@@ -110,24 +110,7 @@ async fn index_handler(
 
 async fn fallback_handler() -> Result<Html<String>, StatusCode> {
 
-    let main = r#"
-        <h1>404 - Lost in the Cosmos</h1>
-        <p>这里是空白。</p>
-        <p><a href="/">返回首页</a></p>
-    "#;  
-    
-    let head = helper::read_file("src/head.html").await;
-    let all_html = format!(
-        r#"<!DOCTYPE html>
-<html>
-{}
-<body>
-<main class="container">
-{}
-</main>
-</body>
-</html>"#,
-         head, main);
+    let all_html = helper::read_file("src/public/404.html").await;
 
     Ok(Html(all_html))
 }
