@@ -77,7 +77,7 @@ async fn index_handler(
 
     for article in articles {
         let (english_time, chinese_time) = helper::format_system_time(article.created_at);
-        
+
         html.push_str(&format!(
             r#"<div class="card">
                 <h2><a href="/articles/{}">{}</a></h2>
@@ -191,7 +191,8 @@ async fn markdown_to_html(content: &str) -> String {
         Options::ENABLE_SUPERSCRIPT |
         Options::ENABLE_TABLES |
         Options::ENABLE_TASKLISTS |
-        Options::ENABLE_FOOTNOTES
+        Options::ENABLE_FOOTNOTES |
+        Options::ENABLE_WIKILINKS
     );
     let mut html_output = String::new();
     pulldown_cmark::html::push_html(&mut html_output, parser);

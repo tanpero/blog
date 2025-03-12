@@ -4,8 +4,6 @@
 
 **Markdown** is created by [Daring Fireball](http://daringfireball.net/); the original guideline is [here](http://daringfireball.net/projects/markdown/syntax). Its syntax, however, varies between different parsers or editors. **Typora** is using [GitHub Flavored Markdown][GFM].
 
-[toc]
-
 ## Block Elements
 
 ### Paragraph and line breaks
@@ -181,10 +179,6 @@ Inputting `***` or `---` on a blank line and pressing `return` will draw a horiz
 ### YAML Front Matter
 
 Typora now supports [YAML Front Matter](http://jekyllrb.com/docs/frontmatter/). Input `---` at the top of the article and then press `Return` to introduce a metadata block. Alternatively, you can insert a metadata block from the top menu of Typora.
-
-### Table of Contents (TOC)
-
-Input `[toc]` and press the `Return` key. This will create a  “Table of Contents” section. The TOC extracts all headings from the document, and its contents are updated automatically as you add to the document.
 
 ## Span Elements
 
@@ -422,7 +416,7 @@ sequenceDiagram
 
 ```
 
-### ABC Score
+### ABC Notation
 
 ```abc
 X:1

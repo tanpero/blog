@@ -320,3 +320,52 @@ code {
     hyphens: auto;
 }
 
+.table-of-contents {
+    top: 20px;
+}
+
+.table-of-contents h2 {
+    margin-top: 0;
+    padding-bottom: 10px;
+    border-bottom: 1px solid #eee;
+}
+
+.toc-list * {
+    list-style: none !important;
+    list-style-type: none !important;
+    padding-left: 0;
+}
+
+.toc-list li {
+    margin-bottom: 8px;
+}
+
+.toc-list a {
+    text-decoration: none;
+    padding: 5px 10px;
+}
+
+.toc-list a:hover {
+    background: #e4e4e4;
+    border-radius: 10px;
+}
+
+.toc-level-2 {
+    padding-left: 2rem;
+}
+
+.toc-level-3 {
+    padding-left: 4rem;
+}
+
+.toc-level-4 {
+    padding-left: 6rem;
+}
+
+.toc-level-5 {
+    padding-left: 8rem;
+}
+
+.toc-level-6 {
+    padding-left: 10rem;
+}
