@@ -25,7 +25,7 @@
         
         if (window.screen.width <= 480) {
             const pres = document.querySelectorAll("pre");
-            [...pres].forEach(e => e.style.fontSize = '32px');
+            [...pres].forEach(e => e.style.fontSize = '34px');
         }
 
         const languages = Array.from(codeBlocks).map(code => code.className);
@@ -66,8 +66,10 @@
         }
 
         if (window.screen.width <= 480) {
-            [...document.querySelectorAll("table")].forEach(e => e.style.fontSize = "32px");
+            [...document.querySelectorAll("table")].forEach(e => e.style.fontSize = "34px");
         }
+
+        processFootnote();
 
     });
 </script>
@@ -117,9 +119,9 @@
                     MathJax.Hub.Queue(() => {
                         if (window.screen.width <= 480) {
                             document.querySelectorAll('[id^="MathJax-Element"]').forEach((e) => {
-                                e.style.transform = "scale(2)";
-                                e.style.marginTop = "40px";
-                                e.style.marginBottom = "40px";
+                                e.style.transform = "scale(2.4)";
+                                e.style.marginTop = "50px";
+                                e.style.marginBottom = "50px";
                             });
                         }
                     });
@@ -374,4 +376,25 @@ function loadABC() {
 }
 
 </script>
+
+<script>
+function processFootnote() {
+    const footnoteDefinitions = document.querySelectorAll(".footnote-definition");
+    const container = document.querySelector(".container");
+
+    if (!container || footnoteDefinitions.length === 0) {
+        return;
+    }
+
+    const tempContainer = document.createElement("div");
+    tempContainer.style.marginTop = "50px";
+
+    footnoteDefinitions.forEach((footnote) => {
+        tempContainer.appendChild(footnote);
+    });
+
+    container.appendChild(tempContainer);
+}
+</script>
+
 </head>
