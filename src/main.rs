@@ -5,8 +5,6 @@ use axum::{
     routing::get,
     Router,
 };
-use chrono::{DateTime, Local};
-use helper::read_file;
 use pulldown_cmark::{Options, Parser};
 use std::{
     collections::HashMap,
@@ -69,17 +67,17 @@ async fn root_handler() -> Result<Html<String>, StatusCode> {
 async fn index_handler(
     state: axum::extract::State<ArticleStore>,
 ) -> Result<Html<String>, StatusCode> {
-    let store = state.read().await;
-    // 按创建时间排序
+    let mut store = state.write().await;
+    sync_articles_with_filesystem(&mut store).await; // 同步文章存储与文件系统
+
     let mut articles: Vec<&Article> = store.values().collect();
     articles.sort_by(|a, b| b.created_at.cmp(&a.created_at));
-    // 生成 HTML
+
     let mut html = String::from("<h1>Articles</h1>");
 
     for article in articles {
-
-        let (englishTime, chineseTime) = helper::format_system_time(article.created_at);
-    
+        let (english_time, chinese_time) = helper::format_system_time(article.created_at);
+        
         html.push_str(&format!(
             r#"<div class="card">
                 <h2><a href="/articles/{}">{}</a></h2>
@@ -87,7 +85,8 @@ async fn index_handler(
             </div>"#,
             article.file_path.file_stem().and_then(|s| s.to_str()).unwrap_or(""),
             article.title,
-            englishTime, chineseTime
+            english_time,
+            chinese_time
         ));
     }
 
@@ -98,11 +97,11 @@ async fn index_handler(
 {}
 <body>
 <main class="container">
-{}
-</main>
+{}</main>
 </body>
 </html>"#,
-         head, html);
+        head, html
+    );
 
     Ok(Html(all_html))
 }
@@ -229,3 +228,74 @@ async fn article_handler(
     Err(StatusCode::NOT_FOUND)
 }
 
+
+// 同步文章存储与文件系统
+async fn sync_articles_with_filesystem(store: &mut HashMap<String, Article>) {
+    let articles_dir = FsPath::new("articles");
+
+    if articles_dir.is_dir() {
+        // 检查现有文章
+        let existing_ids: Vec<String> = store.keys().cloned().collect();
+        for id in existing_ids {
+            if let Some(article) = store.get_mut(&id) {
+                // 检查文件是否还存在
+                if !article.file_path.exists() {
+                    store.remove(&id);
+                    continue;
+                }
+
+                // 检查文件是否被修改
+                if let Ok(metadata) = tokio::fs::metadata(&article.file_path).await {
+                    if let Ok(current_modified) = metadata.modified() {
+                        if current_modified > article.last_modified {
+                            if let Ok(content) = tokio::fs::read_to_string(&article.file_path).await {
+                                // 更新标题
+                                let title = extract_title(&content).await;
+                                article.title = title;
+
+                                // 更新内容
+                                let html = generate_page(&content).await;
+                                article.content = html;
+
+                                // 更新修改时间
+                                article.last_modified = current_modified;
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        // 检查是否有新文件
+        if let Ok(mut entries) = tokio::fs::read_dir(articles_dir).await {
+            while let Ok(Some(entry)) = entries.next_entry().await {
+                let path = entry.path();
+                if path.extension().and_then(|s| s.to_str()) == Some("md") {
+                    if let Some(stem) = path.file_stem().and_then(|s| s.to_str()) {
+                        if !store.contains_key(stem) {
+                            // 处理新文件
+                            if let Ok(content) = tokio::fs::read_to_string(&path).await {
+                                let title = extract_title(&content).await;
+                                let html = generate_page(&content).await;
+                                let metadata = tokio::fs::metadata(&path).await.unwrap();
+                                let last_modified = metadata.modified().unwrap();
+                                let created_at = metadata.created().unwrap();
+
+                                store.insert(
+                                    stem.to_string(),
+                                    Article {
+                                        title,
+                                        content: html,
+                                        file_path: path.clone(),
+                                        last_modified,
+                                        created_at,
+                                    },
+                                );
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}

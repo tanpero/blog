@@ -100,39 +100,6 @@ fn number_to_chinese(num: u32) -> String {
     }
 }
 
-// 将月份转换为汉字
-fn chinese_month(month: u32) -> String {
-    match month {
-        1 => "一".to_string(),
-        2 => "二".to_string(),
-        3 => "三".to_string(),
-        4 => "四".to_string(),
-        5 => "五".to_string(),
-        6 => "六".to_string(),
-        7 => "七".to_string(),
-        8 => "八".to_string(),
-        9 => "九".to_string(),
-        10 => "十".to_string(),
-        11 => "十一".to_string(),
-        12 => "十二".to_string(),
-        _ => unreachable!(), // 不可能到达的分支
-    }
-}
-
-// 将日期转换为汉字
-fn chinese_day(day: u32) -> String {
-    match day {
-        1..=9 => format!("{}", number_to_chinese(day)),
-        10 => "十".to_string(),
-        11..=19 => format!("十{}", number_to_chinese(day % 10)),
-        20 => "二十".to_string(),
-        21..=29 => format!("二十{}", number_to_chinese(day % 10)),
-        30 => "三十".to_string(),
-        31 => "三十一".to_string(),
-        _ => unreachable!(), // 不可能到达的分支
-    }
-}
-
 // 将小时和分钟转换为汉字
 fn chinese_time(hour: u32, minute: u32) -> String {
     let period = match hour {
@@ -152,26 +119,3 @@ fn chinese_time(hour: u32, minute: u32) -> String {
     format!("{}{}点{}分", period, number_to_chinese(hour), number_to_chinese(minute))
 }
 
-// 格式化中文日期和时间
-fn chinese_format(datetime: &DateTime<Local>) -> String {
-    format!(
-        "{}年{}月{}日，{}，{}",
-        chinese_year(datetime.year()), // 年份转换为汉字
-        chinese_month(datetime.month()), // 月份转换为汉字
-        chinese_day(datetime.day()), // 日期转换为汉字
-        chinese_weekday(datetime.weekday()), // 星期几（中文）
-        chinese_time(datetime.hour(), datetime.minute()) // 时间（中文格式）
-    )
-}
-
-fn main() {
-    // 获取当前系统时间
-    let now = std::time::SystemTime::now();
-
-    // 格式化时间
-    let (english_format, chinese_format) = format_system_time(now);
-
-    // 输出结果
-    println!("English format: {}", english_format);
-    println!("Chinese format: {}", chinese_format);
-}

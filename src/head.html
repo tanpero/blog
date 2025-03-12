@@ -88,7 +88,7 @@
                     font: "TeX",
                     linebreaks: {
                         automatic: true,
-                        width: "abcContainer"
+                        width: "container"
                     }
                 },
                 tex2jax: {
@@ -165,19 +165,22 @@
         script.onload = () => {     
 
             mermaid.initialize({
-                theme: 'default',
+                theme: 'dark',
                 securityLevel: 'loose',
+                
                 flowchart: { 
                     curve: 'basis',
                     htmlLabels: true
                 }
             });
+            
 
             const mermaidBlocks = document.querySelectorAll('pre code.language-mermaid');
             
             mermaidBlocks.forEach(async (codeBlock, index) => {
+                let mermaidContainer;
                 try {
-                    const mermaidContainer = document.createElement('div');
+                    mermaidContainer = document.createElement('div');
                     mermaidContainer.className = `mermaid-container chart-${index}`;
                     mermaidContainer.style.textAlign = 'center';
                     mermaidContainer.style.border = 'none';
