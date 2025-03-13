@@ -22,16 +22,21 @@
                 window.hljs = hljs.default;
                 console.log('Highlight.js loaded successfully!');
             } catch (error) {
-                alert("您的浏览器无法正确显示代码高亮！")
+                console.error("Highlight.js loading error:", error);
+                alert("您的浏览器无法正确显示代码高亮！");
             }
         }
 
         // 调用函数加载 Highlight.js
         await loadHighlightJS();
         
+        // 使用响应式字体大小
         if (window.screen.width <= 480) {
             const pres = document.querySelectorAll("pre");
-            [...pres].forEach(e => e.style.fontSize = '34px');
+            [...pres].forEach(e => {
+                e.style.fontSize = 'clamp(14px, 4.5vw, 18px)';
+                e.style.lineHeight = '1.5';
+            });
         }
 
         const languages = Array.from(codeBlocks).map(code => code.className);
@@ -52,13 +57,16 @@
         document.head.appendChild(style2);
             
         uniqueLanguages.forEach(async lang => {
-
-            const langScript = await import(`https://cdn.bootcdn.net/ajax/libs/highlight.js/11.11.1/es/languages/${lang.replace("language-", "")}.min.js`);
-            
-            if (window.hljs.getLanguage(lang)) {
-                window.hljs.registerLanguage(lang, window.hljs.getLanguage(lang));
+            try {
+                const langName = lang.replace("language-", "");
+                const langScript = await import(`https://cdn.bootcdn.net/ajax/libs/highlight.js/11.11.1/es/languages/${langName}.min.js`);
+                
+                if (window.hljs.getLanguage(langName)) {
+                    window.hljs.registerLanguage(langName, window.hljs.getLanguage(langName));
+                }
+            } catch (error) {
+                console.warn(`没有找到对 ${lang} 的高亮支持`);
             }
-            
         });
 
         window.hljs.highlightAll();
@@ -72,7 +80,9 @@
         }
 
         if (window.screen.width <= 480) {
-            [...document.querySelectorAll("table")].forEach(e => e.style.fontSize = "34px");
+            [...document.querySelectorAll("table")].forEach(e => {
+                e.style.fontSize = "clamp(12px, 4vw, 16px)";
+            });
         }
 
         if (window.location.href.replace(window.location.origin + "/articles", "").length > 1) {
@@ -101,7 +111,9 @@
                     linebreaks: {
                         automatic: true,
                         width: "container"
-                    }
+                    },
+                    scale: 100,
+                    minScaleAdjust: 50
                 },
                 tex2jax: {
                     inlineMath: [ ['$','$'], ['\\(','\\)'] ],
@@ -112,7 +124,21 @@
                 },
                 showMathMenu: false,
                 showProcessingMessages: false,
-                messageStyle: "none"
+                messageStyle: "none",
+                styles: {
+                    ".MathJax_SVG": {
+                        "max-width": "100%",
+                        "overflow-x": "auto",
+                        "overflow-y": "hidden",
+                        "padding": "0.5em 0",
+                        "display": "inline-block"
+                    },
+                    ".MathJax_SVG_Display": {
+                        "max-width": "100%",
+                        "overflow-x": "auto",
+                        "overflow-y": "hidden"
+                    }
+                }
             };
 
             const script = document.createElement("script");
@@ -126,12 +152,23 @@
                         element.textContent = `$${element.textContent}$`;
                     }
                     MathJax.Hub.Queue(["Typeset", MathJax.Hub, element]);
+                    
+                    // 移动端公式处理
                     MathJax.Hub.Queue(() => {
                         if (window.screen.width <= 480) {
                             document.querySelectorAll('[id^="MathJax-Element"]').forEach((e) => {
-                                e.style.transform = "scale(2.4)";
-                                e.style.marginTop = "50px";
-                                e.style.marginBottom = "50px";
+                                // 使用响应式缩放代替固定缩放
+                                const width = e.getBoundingClientRect().width;
+                                const containerWidth = e.parentElement.getBoundingClientRect().width;
+                                
+                                if (width > containerWidth) {
+                                    const scale = containerWidth / width * 0.95;
+                                    e.style.transform = `scale(${scale})`;
+                                    e.style.transformOrigin = "left center";
+                                    e.style.marginBottom = "1em";
+                                    e.style.marginTop = "1em";
+                                    e.style.display = "inline-block";
+                                }
                             });
                         }
                     });
@@ -171,21 +208,22 @@
 </style>
 <script>
     function loadMermaid() {
-        
         const script = document.createElement("script");
         script.src = "https://unpkg.com/mermaid@10.0.3-alpha.1/dist/mermaid.min.js";
         script.onload = () => {     
-
+            const isDarkMode = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+            
             mermaid.initialize({
-                theme: 'dark',
+                theme: isDarkMode ? 'dark' : 'default',
                 securityLevel: 'loose',
-                
+                fontFamily: "'Trebuchet MS', 'Lucida Sans Unicode', 'Lucida Grande', 'Lucida Sans', Arial, sans-serif",
+                fontSize: 16,
                 flowchart: { 
                     curve: 'basis',
                     htmlLabels: true
-                }
+                },
+                responsiveBreakpoint: 768, 
             });
-            
 
             const mermaidBlocks = document.querySelectorAll('pre code.language-mermaid');
             
@@ -196,6 +234,8 @@
                     mermaidContainer.className = `mermaid-container chart-${index}`;
                     mermaidContainer.style.textAlign = 'center';
                     mermaidContainer.style.border = 'none';
+                    mermaidContainer.style.overflowX = 'auto';
+                    mermaidContainer.style.maxWidth = '100%';
                     
                     codeBlock.parentElement.parentElement.insertBefore(mermaidContainer, codeBlock.parentElement);
 
@@ -210,8 +250,7 @@
                     const toggle = document.createElement('div');
                     toggle.className = 'code-toggle';
                     toggle.textContent = '▲ 显示代码';
-                    mermaidContainer.appendChild(toggle);
-
+                    
                     let isVisible = false;
                     toggle.addEventListener('click', () => {
                         isVisible = !isVisible;
@@ -227,6 +266,7 @@
 
                     const exportBtn = document.createElement('button');
                     exportBtn.textContent = '导出为 SVG';
+                    exportBtn.className = 'export-btn';
                     exportBtn.onclick = () => {
                         const blob = new Blob([svg], {type: 'image/svg+xml'});
                         const url = URL.createObjectURL(blob);
@@ -235,24 +275,6 @@
                         a.download = `chart-${index}.svg`;
                         a.click();
                     };
-                    exportBtn.style = `                
-                        background: none;
-                        color: var(--secondary-color);
-                        padding: 8px 16px;
-                        border: none;
-                        font-family: inherit;
-                        font-size: 14px;
-                        cursor: pointer;
-                        transition: color 0.2s, border-bottom-color 0.2s;
-                        border-bottom: 1px solid transparent;
-                    `;
-
-                    if (window.screen.width <= 480) {
-                        exportBtn.style.transform = `scale(1.8)`;
-                        exportBtn.style.transformOrigin = `center center`;                        
-                        toggle.style.transform = `scale(1.8)`;
-                        toggle.style.transformOrigin = `center center`;
-                    }
 
                     const buttonContainer = document.createElement('div');
                     buttonContainer.className = "button-container";
