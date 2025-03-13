@@ -8,6 +8,12 @@
     window.hasABC = false;
 
     document.addEventListener("DOMContentLoaded", async () => {
+
+        [...document.querySelectorAll("hr")].forEach(e => {
+            e.style.marginBottom = "3rem";
+            e.style.marginTop = "3rem";
+        });
+
         const codeBlocks = document.querySelectorAll("code");
 
         async function loadHighlightJS() {
