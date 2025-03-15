@@ -126,14 +126,26 @@
                         element.textContent = `$${element.textContent}$`;
                     }
                     MathJax.Hub.Queue(["Typeset", MathJax.Hub, element]);
-                    MathJax.Hub.Queue(() => {
-                        if (window.screen.width <= 480) {
-                            document.querySelectorAll('[id^="MathJax-Element"]').forEach((e) => {
-                                e.style.transform = "scale(2.4)";
-                                e.style.marginTop = "50px";
-                                e.style.marginBottom = "50px";
-                            });
-                        }
+                    
+                });
+
+                
+                const container = document.querySelector('.container');
+                const containerWidth = container ? container.clientWidth : 0;
+
+                MathJax.Hub.Queue(() => {
+                    if (window.screen.width <= 480) {
+                        document.querySelectorAll('.math-display [id^="MathJax-Element"]').forEach((e) => {
+                            e.style.zoom = 2;
+                        });
+                        document.querySelectorAll('p .math-inline [id^="MathJax-Element"]').forEach((e) => {
+                            e.style.zoom = 2;
+                        });
+                    }
+                });
+                MathJax.Hub.Queue(() => {
+                    document.querySelectorAll('.MathJax_SVG_Display').forEach(e => {
+                        e.style.overflowX = 'auto';
                     });
                 });
             };
