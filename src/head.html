@@ -75,8 +75,6 @@
             [...document.querySelectorAll("table")].forEach(e => e.style.fontSize = "34px");
         }
 
-        processFootnote();
-
     });
 </script>
 
@@ -395,25 +393,5 @@ function loadABC() {
 
 </script>
 
-
-<script>
-function processFootnote() {
-    const footnoteDefinitions = document.querySelectorAll(".footnote-definition");
-    const container = document.querySelector(".container");
-
-    if (!container || footnoteDefinitions.length === 0) {
-        return;
-    }
-
-    const tempContainer = document.createElement("div");
-    tempContainer.style.marginTop = "80px";
-
-    footnoteDefinitions.forEach((footnote) => {
-        tempContainer.appendChild(footnote);
-    });
-
-    container.appendChild(tempContainer);
-}
-</script>
 
 </head>

@@ -4,9 +4,9 @@ use std::collections::HashMap;
 use markup5ever::ns;
 use markup5ever::namespace_url;
 
-pub fn enable_table_of_contents(html: &str) -> String {
-    
-    let document = parse_html().one(html);
+pub fn enable_table_of_contents(_document: &NodeRef) -> NodeRef {   
+
+    let document = _document.clone();
 
     let headings: Vec<NodeRef> = document
         .select("h1, h2, h3, h4, h5, h6")
@@ -15,7 +15,7 @@ pub fn enable_table_of_contents(html: &str) -> String {
         .collect();
 
     if headings.is_empty() {
-        return document.to_string();
+        return document;
     }
 
     let mut counters: HashMap<u8, u32> = HashMap::new();
@@ -155,6 +155,26 @@ pub fn enable_table_of_contents(html: &str) -> String {
             .borrow_mut()
             .insert("style", "margin-right: 10px; padding: 5px 10px; cursor: pointer; font-size: 1em;".to_string());
 
+        toggle_button
+            .as_element()
+            .unwrap()
+            .attributes
+            .borrow_mut()
+            .insert("onclick", r#"
+                const subLists = document.querySelectorAll('.table-of-contents ul');
+                if (this.textContent.includes('折叠')) {
+                    subLists.forEach(subList => {
+                        subList.style.display = 'none';
+                    });
+                    this.textContent = '展开目录 👆';
+                } else {
+                    subLists.forEach(subList => {
+                        subList.style.display = 'block';
+                    });
+                    this.textContent = '折叠目录 👇';
+                }
+            "#.to_string());
+
         // 插入按钮
         first_toc_item
             .as_node()
@@ -170,6 +190,5 @@ pub fn enable_table_of_contents(html: &str) -> String {
         }
     }
 
-    // 返回序列化后的 HTML
-    document.to_string()
+    document
 }

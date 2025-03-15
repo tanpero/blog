@@ -5,6 +5,8 @@ use axum::{
     routing::get,
     Router,
 };
+use footnote::process_footnote;
+use kuchiki::{parse_html, traits::*, NodeRef};
 use pulldown_cmark::{Options, Parser};
 use table_of_contents::enable_table_of_contents;
 use std::{
@@ -20,7 +22,7 @@ use tower_http::services::ServeDir;
 use std::env;
 mod helper;
 mod table_of_contents;
-
+mod footnote;
 
 type ArticleStore = Arc<RwLock<HashMap<String, Article>>>;
 
@@ -180,8 +182,20 @@ async fn generate_page(source: &String) -> String {
 </body>
 </html>"#,
          head, main);
-    let html_with_toc = enable_table_of_contents(&html);
-    html_with_toc
+    
+    post_process_html(html)
+}
+
+fn post_process_html(origin_html: String) -> String {
+
+    let document = parse_html().one(origin_html);
+
+    let with_toc = enable_table_of_contents(&document);
+    let with_footnote = process_footnote(&with_toc);
+    let final_document = with_footnote;
+    let final_html = final_document.to_string();
+
+    final_html
 }
 
 // Markdown转换HTML
