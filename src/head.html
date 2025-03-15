@@ -75,10 +75,6 @@
             [...document.querySelectorAll("table")].forEach(e => e.style.fontSize = "34px");
         }
 
-        if (window.location.href.replace(window.location.origin + "/articles", "").length > 1) {
-            enableTableOfContents();
-        }
-
         processFootnote();
 
     });
@@ -399,102 +395,6 @@ function loadABC() {
 
 </script>
 
-<script>
-function enableTableOfContents() {
-    const headings = Array.from(document.querySelectorAll('h1, h2, h3, h4, h5, h6'));
-    
-    if (headings.length === 0) return;
-
-    let counters = {};
-    headings.forEach(heading => {
-        const tagName = heading.tagName.toLowerCase();
-        const level = parseInt(tagName.charAt(1));
-        
-        for (let i = level + 1; i <= 6; i++) {
-            counters[i] = 0;
-        }
-        
-        counters[level] = (counters[level] || 0) + 1;
-        
-        let number = '';
-        for (let i = 1; i <= level; i++) {
-            number += (counters[i] || 0) + '.';
-        }
-        number = number.slice(0, -1);
-        
-        const anchorId = `${tagName}-${number}`;
-        heading.id = anchorId;
-        
-    });
-    
-    const toc = document.createElement('div');
-    toc.id = 'table-of-contents';
-    toc.className = 'table-of-contents';
-    toc.innerHTML = '<ul class="toc-list"></ul>';
-    
-    const tocList = toc.querySelector('.toc-list');
-    let currentTocItems = [tocList];
-    
-    headings.forEach(heading => {
-        const tagName = heading.tagName.toLowerCase();
-        const level = parseInt(tagName.charAt(1));
-        
-        const listItem = document.createElement('li');
-        listItem.className = `toc-level-${level}`;
-        
-        const link = document.createElement('a');
-        link.href = `#${heading.id}`;
-        link.textContent = heading.textContent.trim();
-        
-        listItem.appendChild(link);
-        
-        while (currentTocItems.length > level) {
-            currentTocItems.pop();
-        }
-        
-        if (level > 1) {
-            if (!currentTocItems[currentTocItems.length - 1].querySelector('ul')) {
-                const subList = document.createElement('ul');
-                currentTocItems[currentTocItems.length - 1].appendChild(subList);
-            }
-            currentTocItems.push(currentTocItems[currentTocItems.length - 1].querySelector('ul'));
-        }
-        
-        currentTocItems[currentTocItems.length - 1].appendChild(listItem);
-    });
-
-    const firstTocItem = tocList.querySelector('li');
-    
-    if (firstTocItem) {
-        
-        const toggleButton = document.createElement('button');
-        toggleButton.className = 'toggle-btn';
-        toggleButton.textContent = '折叠目录 👇';
-        toggleButton.style.marginRight = '10px';
-        toggleButton.style.padding = '5px 10px';
-        toggleButton.style.cursor = 'pointer';
-        toggleButton.addEventListener('click', function() {
-            
-            const subLists = tocList.querySelectorAll('ul');
-            if (toggleButton.textContent.includes('折叠')) {
-                subLists.forEach(subList => {
-                    subList.style.display = 'none';
-                });
-                toggleButton.textContent = '展开目录 👆';
-            } else {
-                subLists.forEach(subList => {
-                    subList.style.display = 'block';
-                });
-                toggleButton.textContent = '折叠目录 👇';
-            }
-        });
-        
-        firstTocItem.parentNode.insertBefore(toggleButton, firstTocItem);
-    }
-    
-    document.querySelector(".container").insertBefore(toc, document.querySelector("h1").nextElementSibling);
-};
-</script>
 
 <script>
 function processFootnote() {

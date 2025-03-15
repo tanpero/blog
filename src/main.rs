@@ -6,6 +6,7 @@ use axum::{
     Router,
 };
 use pulldown_cmark::{Options, Parser};
+use table_of_contents::enable_table_of_contents;
 use std::{
     collections::HashMap,
     path::{Path as FsPath, PathBuf},
@@ -18,6 +19,7 @@ use tokio::io::AsyncReadExt;
 use tower_http::services::ServeDir;
 use std::env;
 mod helper;
+mod table_of_contents;
 
 
 type ArticleStore = Arc<RwLock<HashMap<String, Article>>>;
@@ -178,7 +180,8 @@ async fn generate_page(source: &String) -> String {
 </body>
 </html>"#,
          head, main);
-    html
+    let html_with_toc = enable_table_of_contents(&html);
+    html_with_toc
 }
 
 // Markdown转换HTML
